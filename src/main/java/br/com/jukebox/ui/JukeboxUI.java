@@ -28,12 +28,15 @@ public class JukeboxUI extends JFrame {
     private long tempoEstimado = 180; // padrão de 3 min, depois ajustamos
     private long tempoDecorrido = 0;
     private final JSlider volumeSlider = new JSlider(0, 100, 80); // 80% de volume inicial
-
+    private final JLabel volumeLabel = new JLabel("80%");
+    private final JLabel volumeIcon = new JLabel("🔊");
+    private final JButton muteButton = new JButton("Mute");
+    private boolean muted = false;
+    private int volumeAntesDoMute = 80;
 
     public JukeboxUI() {
         super("Jukebox");
 
-        // Aqui vai o código do ícone:
         URL iconURL = getClass().getClassLoader().getResource("icon.ico");
         if (iconURL != null) {
             System.out.println("✅ Ícone encontrado: " + iconURL);
@@ -43,13 +46,11 @@ public class JukeboxUI extends JFrame {
             System.out.println("❌ Ícone não encontrado no classpath!");
         }
 
-
         setLayout(new BorderLayout(10, 10));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(800, 400);
         setLocationRelativeTo(null);
 
-        // Painel esquerdo: Lista de músicas
         JScrollPane scrollPane = new JScrollPane(musicList);
         musicList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         musicList.addListSelectionListener(e -> {
@@ -69,7 +70,6 @@ public class JukeboxUI extends JFrame {
         });
         add(scrollPane, BorderLayout.WEST);
 
-        // Painel central: capa + nome da música
         JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
         albumCover.setHorizontalAlignment(JLabel.CENTER);
         albumCover.setPreferredSize(new Dimension(200, 200));
@@ -79,7 +79,6 @@ public class JukeboxUI extends JFrame {
         centerPanel.add(musicLabel, BorderLayout.SOUTH);
         add(centerPanel, BorderLayout.CENTER);
 
-        // Painel inferior: botões
         JPanel controlsPanel = new JPanel();
         JButton playButton = new JButton("▶ Play");
         JButton pauseButton = new JButton("⏸ Pause");
@@ -88,11 +87,12 @@ public class JukeboxUI extends JFrame {
         playButton.addActionListener((ActionEvent e) -> {
             if (currentMusic != null) {
                 player.tocar(currentMusic);
+                player.setVolume(volumeSlider.getValue() / 100f);
             }
 
             tempoDecorrido = 0;
             progressBar.setValue(0);
-            progressBar.setMaximum((int) tempoEstimado); // ou use 200, 300, etc
+            progressBar.setMaximum((int) tempoEstimado);
             progressBar.setEnabled(true);
             tempoLabel.setText("00:00 / " + formatarTempo(tempoEstimado));
 
@@ -103,6 +103,7 @@ public class JukeboxUI extends JFrame {
                 if (tempoDecorrido <= tempoEstimado) {
                     progressBar.setValue((int) tempoDecorrido);
                     tempoLabel.setText(formatarTempo(tempoDecorrido) + " / " + formatarTempo(tempoEstimado));
+                    progressBar.setString(formatarTempo(tempoDecorrido) + " / " + formatarTempo(tempoEstimado));
                 } else {
                     progressTimer.stop();
                 }
@@ -110,17 +111,15 @@ public class JukeboxUI extends JFrame {
             progressTimer.start();
         });
 
-        pauseButton.addActionListener((ActionEvent e) -> {
-            player.pausar();
-        });
+        pauseButton.addActionListener((ActionEvent e) -> player.pausar());
 
         stopButton.addActionListener((ActionEvent e) -> {
             player.parar();
-
             if (progressTimer != null) progressTimer.stop();
             tempoDecorrido = 0;
             progressBar.setValue(0);
             tempoLabel.setText("00:00 / " + formatarTempo(tempoEstimado));
+            progressBar.setString("00:00 / " + formatarTempo(tempoEstimado));
         });
 
         controlsPanel.add(playButton);
@@ -128,30 +127,51 @@ public class JukeboxUI extends JFrame {
         controlsPanel.add(stopButton);
         add(controlsPanel, BorderLayout.SOUTH);
 
-        // Barra de progresso
         progressBar.setMinimum(0);
         progressBar.setMaximum((int) tempoEstimado);
         progressBar.setValue(0);
         progressBar.setEnabled(false);
         progressBar.setPreferredSize(new Dimension(200, 20));
+        progressBar.setStringPainted(true);
 
         controlsPanel.add(progressBar);
         controlsPanel.add(tempoLabel);
 
-        // Volume Slider
         volumeSlider.setPreferredSize(new Dimension(100, 20));
         volumeSlider.setToolTipText("Volume");
         volumeSlider.addChangeListener(e -> {
             int volume = volumeSlider.getValue();
             float volumeFloat = volume / 100f;
-            player.setVolume(volumeFloat); // envia para o Mp3StreamPlayer
+            player.setVolume(volumeFloat);
+            volumeLabel.setText(volume + "%");
+
+            if (volume == 0) {
+                volumeIcon.setText("🔇");
+            } else if (volume < 50) {
+                volumeIcon.setText("🔉");
+            } else {
+                volumeIcon.setText("🔊");
+            }
         });
 
-        controlsPanel.add(new JLabel("🔊"));
+        muteButton.addActionListener(e -> {
+            if (!muted) {
+                volumeAntesDoMute = volumeSlider.getValue();
+                volumeSlider.setValue(0);
+                muted = true;
+                muteButton.setText("Unmute");
+            } else {
+                volumeSlider.setValue(volumeAntesDoMute);
+                muted = false;
+                muteButton.setText("Mute");
+            }
+        });
+
+        controlsPanel.add(volumeIcon);
         controlsPanel.add(volumeSlider);
+        controlsPanel.add(volumeLabel);
+        controlsPanel.add(muteButton);
 
-
-        // Menu topo: selecionar pasta
         JMenuBar menuBar = new JMenuBar();
         JMenu menu = new JMenu("Arquivo");
         JMenuItem selecionarPasta = new JMenuItem("Selecionar Pasta de Músicas");
@@ -192,14 +212,13 @@ public class JukeboxUI extends JFrame {
             Map<?, ?> propriedades = baseFileFormat.properties();
             Long microseconds = (Long) propriedades.get("duration");
             if (microseconds != null) {
-                return microseconds / 1_000_000; // microsegundos para segundos
+                return microseconds / 1_000_000;
             }
         } catch (Exception e) {
             System.out.println("⚠️ Não foi possível estimar duração: " + e.getMessage());
         }
-        return 180; // padrão (3 min) se não conseguir detectar
+        return 180;
     }
-
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
