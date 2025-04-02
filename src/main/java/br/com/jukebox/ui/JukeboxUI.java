@@ -2,6 +2,7 @@ package br.com.jukebox.ui;
 
 import br.com.jukebox.audio.PlayerUniversal;
 import br.com.jukebox.service.MusicService;
+import br.com.jukebox.util.AlbumArtExtractor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,6 +35,16 @@ public class JukeboxUI extends JFrame {
                 currentMusic = musicList.getSelectedValue();
                 if (currentMusic != null) {
                     musicLabel.setText("🎵 " + currentMusic.getName());
+
+                    var url = getClass().getClassLoader().getResource("default-cover.png");
+                    if (url != null) {
+                        ImageIcon icon = new ImageIcon(url);
+                        Image resized = icon.getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH);
+                        albumCover.setIcon(new ImageIcon(resized));
+                    } else {
+                        System.out.println("⚠️ Imagem default-cover.png não encontrada no classpath.");
+                    }
+
                 }
             }
         });
