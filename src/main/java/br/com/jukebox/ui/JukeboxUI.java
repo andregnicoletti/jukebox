@@ -1,15 +1,18 @@
 package br.com.jukebox.ui;
 
-import br.com.jukebox.audio.PlayerUniversal;
+import br.com.jukebox.audio.Mp3StreamPlayer;
 import br.com.jukebox.service.MusicService;
 import br.com.jukebox.util.AlbumArtExtractor;
 
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioSystem;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 public class JukeboxUI extends JFrame {
 
@@ -17,8 +20,13 @@ public class JukeboxUI extends JFrame {
     private final JList<File> musicList = new JList<>(listModel);
     private final JLabel musicLabel = new JLabel("Nenhuma música selecionada");
     private final JLabel albumCover = new JLabel();
-    private final PlayerUniversal player = new PlayerUniversal();
+    private final Mp3StreamPlayer player = new Mp3StreamPlayer();
     private File currentMusic;
+    private final JSlider progressBar = new JSlider();
+    private final JLabel tempoLabel = new JLabel("00:00 / 00:00");
+    private Timer progressTimer;
+    private long tempoEstimado = 180; // padrão de 3 min, depois ajustamos
+    private long tempoDecorrido = 0;
 
     public JukeboxUI() {
         super("Jukebox");
@@ -47,16 +55,13 @@ public class JukeboxUI extends JFrame {
                 currentMusic = musicList.getSelectedValue();
                 if (currentMusic != null) {
                     musicLabel.setText("🎵 " + currentMusic.getName());
+                    ImageIcon capa = AlbumArtExtractor.extrairCapa(currentMusic, 200, 200);
+                    albumCover.setIcon(capa != null ? capa :
+                            new ImageIcon(getClass().getResource("/default-cover.png")));
 
-                    var url = getClass().getClassLoader().getResource("default-cover.png");
-                    if (url != null) {
-                        ImageIcon icon = new ImageIcon(url);
-                        Image resized = icon.getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH);
-                        albumCover.setIcon(new ImageIcon(resized));
-                    } else {
-                        System.out.println("⚠️ Imagem default-cover.png não encontrada no classpath.");
-                    }
-
+                    tempoEstimado = estimarDuracaoEmSegundos(currentMusic);
+                    tempoLabel.setText("00:00 / " + formatarTempo(tempoEstimado));
+                    progressBar.setValue(0);
                 }
             }
         });
@@ -82,6 +87,25 @@ public class JukeboxUI extends JFrame {
             if (currentMusic != null) {
                 player.tocar(currentMusic);
             }
+
+            tempoDecorrido = 0;
+            progressBar.setValue(0);
+            progressBar.setMaximum((int) tempoEstimado); // ou use 200, 300, etc
+            progressBar.setEnabled(true);
+            tempoLabel.setText("00:00 / " + formatarTempo(tempoEstimado));
+
+            if (progressTimer != null) progressTimer.stop();
+
+            progressTimer = new Timer(1000, ev -> {
+                tempoDecorrido++;
+                if (tempoDecorrido <= tempoEstimado) {
+                    progressBar.setValue((int) tempoDecorrido);
+                    tempoLabel.setText(formatarTempo(tempoDecorrido) + " / " + formatarTempo(tempoEstimado));
+                } else {
+                    progressTimer.stop();
+                }
+            });
+            progressTimer.start();
         });
 
         pauseButton.addActionListener((ActionEvent e) -> {
@@ -90,12 +114,28 @@ public class JukeboxUI extends JFrame {
 
         stopButton.addActionListener((ActionEvent e) -> {
             player.parar();
+
+            if (progressTimer != null) progressTimer.stop();
+            tempoDecorrido = 0;
+            progressBar.setValue(0);
+            tempoLabel.setText("00:00 / " + formatarTempo(tempoEstimado));
         });
 
         controlsPanel.add(playButton);
         controlsPanel.add(pauseButton);
         controlsPanel.add(stopButton);
         add(controlsPanel, BorderLayout.SOUTH);
+
+        // Barra de progresso
+        progressBar.setMinimum(0);
+        progressBar.setMaximum((int) tempoEstimado);
+        progressBar.setValue(0);
+        progressBar.setEnabled(false);
+        progressBar.setPreferredSize(new Dimension(200, 20));
+
+        controlsPanel.add(progressBar);
+        controlsPanel.add(tempoLabel);
+
 
         // Menu topo: selecionar pasta
         JMenuBar menuBar = new JMenuBar();
@@ -125,6 +165,27 @@ public class JukeboxUI extends JFrame {
             listModel.addElement(musica);
         }
     }
+
+    private String formatarTempo(long segundos) {
+        long min = segundos / 60;
+        long sec = segundos % 60;
+        return String.format("%02d:%02d", min, sec);
+    }
+
+    private long estimarDuracaoEmSegundos(File arquivo) {
+        try {
+            AudioFileFormat baseFileFormat = AudioSystem.getAudioFileFormat(arquivo);
+            Map<?, ?> propriedades = baseFileFormat.properties();
+            Long microseconds = (Long) propriedades.get("duration");
+            if (microseconds != null) {
+                return microseconds / 1_000_000; // microsegundos para segundos
+            }
+        } catch (Exception e) {
+            System.out.println("⚠️ Não foi possível estimar duração: " + e.getMessage());
+        }
+        return 180; // padrão (3 min) se não conseguir detectar
+    }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
