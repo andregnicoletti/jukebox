@@ -22,7 +22,7 @@ public class JukeboxUI extends JFrame {
     private final JLabel albumCover = new JLabel();
     private final Mp3StreamPlayer player = new Mp3StreamPlayer();
     private File currentMusic;
-    private final JSlider progressBar = new JSlider();
+    private final JProgressBar progressBar = new JProgressBar();
     private final JLabel tempoLabel = new JLabel("00:00 / 00:00");
     private Timer progressTimer;
     private long tempoEstimado = 180; // padrão de 3 min, depois ajustamos

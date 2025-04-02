@@ -80,15 +80,23 @@ public class Mp3StreamPlayer {
         }
     }
 
-    public void setVolume(float volumePercent) {
+    public void setVolume(float percent) {
         if (line != null && line.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
             FloatControl volume = (FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN);
-            float min = volume.getMinimum();
-            float max = volume.getMaximum();
+            float min = volume.getMinimum(); // geralmente -80.0
+            float max = volume.getMaximum(); // geralmente 6.0
 
-            // Para garantir que 0.0 silencie e 1.0 seja volume total
-            float value = min + (max - min) * volumePercent;
-            volume.setValue(value);
+            // Aplica curva logarítmica para suavizar o controle
+            float gain;
+            if (percent == 0) {
+                gain = min; // silêncio
+            } else {
+                gain = (float) (Math.log10(percent) * 20.0);
+                gain = Math.max(min, Math.min(gain, max)); // limita entre min e max
+            }
+
+            volume.setValue(gain);
         }
     }
+
 }
