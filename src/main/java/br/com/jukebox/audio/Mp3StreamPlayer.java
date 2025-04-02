@@ -85,7 +85,9 @@ public class Mp3StreamPlayer {
             FloatControl volume = (FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN);
             float min = volume.getMinimum();
             float max = volume.getMaximum();
-            float value = min + (max - min) * volumePercent; // volumePercent de 0.0 a 1.0
+
+            // Para garantir que 0.0 silencie e 1.0 seja volume total
+            float value = min + (max - min) * volumePercent;
             volume.setValue(value);
         }
     }

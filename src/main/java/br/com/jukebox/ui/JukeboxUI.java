@@ -27,6 +27,8 @@ public class JukeboxUI extends JFrame {
     private Timer progressTimer;
     private long tempoEstimado = 180; // padrão de 3 min, depois ajustamos
     private long tempoDecorrido = 0;
+    private final JSlider volumeSlider = new JSlider(0, 100, 80); // 80% de volume inicial
+
 
     public JukeboxUI() {
         super("Jukebox");
@@ -135,6 +137,18 @@ public class JukeboxUI extends JFrame {
 
         controlsPanel.add(progressBar);
         controlsPanel.add(tempoLabel);
+
+        // Volume Slider
+        volumeSlider.setPreferredSize(new Dimension(100, 20));
+        volumeSlider.setToolTipText("Volume");
+        volumeSlider.addChangeListener(e -> {
+            int volume = volumeSlider.getValue();
+            float volumeFloat = volume / 100f;
+            player.setVolume(volumeFloat); // envia para o Mp3StreamPlayer
+        });
+
+        controlsPanel.add(new JLabel("🔊"));
+        controlsPanel.add(volumeSlider);
 
 
         // Menu topo: selecionar pasta
