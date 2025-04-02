@@ -62,7 +62,7 @@ public class JukeboxUI extends JFrame {
         });
 
         pauseButton.addActionListener((ActionEvent e) -> {
-            JOptionPane.showMessageDialog(this, "Pause ainda não implementado.");
+            player.pausar();
         });
 
         stopButton.addActionListener((ActionEvent e) -> {

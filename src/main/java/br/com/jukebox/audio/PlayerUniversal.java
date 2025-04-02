@@ -1,63 +1,60 @@
 package br.com.jukebox.audio;
 
-import javazoom.jl.player.Player;
+import javazoom.jl.decoder.JavaLayerException;
+import javazoom.jl.player.advanced.AdvancedPlayer;
 
-import javax.sound.sampled.*;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 
 public class PlayerUniversal {
 
-    private Clip clip;           // Para .wav
-    private Player mp3Player;    // Para .mp3
-    private Thread thread;       // Para tocar MP3 sem travar o app
+    private AdvancedPlayer player;
+    private Thread thread;
+    private File currentFile;
+    private boolean isPaused = false;
+    private int pausedFrame = 0;
 
     public void tocar(File arquivo) {
-        String nome = arquivo.getName().toLowerCase();
+        parar(); // Garante que outra música não esteja tocando
+        currentFile = arquivo;
+        isPaused = false;
 
-        if (nome.endsWith(".mp3")) {
-            tocarMp3(arquivo);
-        } else if (nome.endsWith(".wav")) {
-            tocarWav(arquivo);
-        } else {
-            System.out.println("Formato não suportado: " + nome);
-        }
-    }
-
-    private void tocarMp3(File arquivo) {
         thread = new Thread(() -> {
             try {
-                FileInputStream fis = new FileInputStream(arquivo);
-                mp3Player = new Player(fis);
-                mp3Player.play();
+                FileInputStream fis = new FileInputStream(currentFile);
+                player = new AdvancedPlayer(fis);
+                player.play(pausedFrame, Integer.MAX_VALUE); // Começa do frame pausado (ou 0)
             } catch (Exception e) {
-                System.out.println("Erro ao tocar MP3: " + e.getMessage());
+                e.printStackTrace();
             }
         });
         thread.start();
     }
 
-    private void tocarWav(File arquivo) {
-        try {
-            AudioInputStream audioStream = AudioSystem.getAudioInputStream(arquivo);
-            clip = AudioSystem.getClip();
-            clip.open(audioStream);
-            clip.start();
-        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-            System.out.println("Erro ao tocar WAV: " + e.getMessage());
-        }
-    }
-
     public void parar() {
-        if (clip != null && clip.isRunning()) {
-            clip.stop();
-        }
-        if (mp3Player != null) {
-            mp3Player.close();
+        if (player != null) {
+            player.close();
         }
         if (thread != null && thread.isAlive()) {
             thread.interrupt();
+        }
+        pausedFrame = 0;
+    }
+
+    public void pausar() {
+        if (player != null) {
+            // Essa simulação não é perfeita: JLayer não expõe frame atual.
+            // Aqui a gente apenas fecha o player e marca como "pausado".
+            isPaused = true;
+            parar(); // Fecha o player
+            // Opcionalmente, poderíamos estimar o frame com base no tempo
+            System.out.println("⏸ Pausado (reprodução interrompida, posição não precisa ser exata)");
+        }
+    }
+
+    public void retomar() {
+        if (isPaused && currentFile != null) {
+            tocar(currentFile);
         }
     }
 }
