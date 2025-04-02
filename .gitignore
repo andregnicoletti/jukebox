@@ -1,0 +1,35 @@
+# Compilados Java
+*.class
+
+# Diretórios de build do Maven
+/target/
+
+# Configurações do IntelliJ
+/.idea/
+/*.iml
+
+# Logs
+*.log
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de tempo de execução
+*.swp
+*.swo
+
+# Outros arquivos temporários
+*.bak
+*.tmp
+
+# Arquivos de entrada do usuário
+*.mp3
+*.wav
+*.jpg
+*.png
+
+# Ignorar capas de música locais (se você quiser)
+musicas/
+*.cover.*
+
