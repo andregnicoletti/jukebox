@@ -8,6 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.net.URL;
 import java.util.List;
 
 public class JukeboxUI extends JFrame {
@@ -21,6 +22,17 @@ public class JukeboxUI extends JFrame {
 
     public JukeboxUI() {
         super("Jukebox");
+
+        // Aqui vai o código do ícone:
+        URL iconURL = getClass().getClassLoader().getResource("icon.ico");
+        if (iconURL != null) {
+            System.out.println("✅ Ícone encontrado: " + iconURL);
+            Image image = new ImageIcon(iconURL).getImage();
+            setIconImage(image);
+        } else {
+            System.out.println("❌ Ícone não encontrado no classpath!");
+        }
+
 
         setLayout(new BorderLayout(10, 10));
         setDefaultCloseOperation(EXIT_ON_CLOSE);

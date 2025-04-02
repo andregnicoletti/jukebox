@@ -10,47 +10,53 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source> <!-- ou 11, se preferir -->
+        <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
     <repositories>
         <repository>
             <id>mvnrepository</id>
-            <url>https://mvnrepository.com/artifact</url>
+            <url>https://repo1.maven.org/maven2/</url>
         </repository>
     </repositories>
 
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/javazoom/jlayer -->
-        <dependency>
-            <groupId>com.googlecode.soundlibs</groupId>
-            <artifactId>mp3spi</artifactId>
-            <version>1.9.5-1</version>
-        </dependency>
+        <!-- Reprodução de MP3 -->
         <dependency>
             <groupId>com.googlecode.soundlibs</groupId>
             <artifactId>jlayer</artifactId>
             <version>1.0.1-1</version>
         </dependency>
+
+        <!-- Suporte a metadados (capas) -->
         <dependency>
             <groupId>org.jaudiotagger</groupId>
             <artifactId>jaudiotagger</artifactId>
             <version>2.0.1</version>
         </dependency>
 
+        <!-- mp3spi é opcional aqui, mas pode manter -->
+        <dependency>
+            <groupId>com.googlecode.soundlibs</groupId>
+            <artifactId>mp3spi</artifactId>
+            <version>1.9.5-1</version>
+        </dependency>
     </dependencies>
 
     <build>
-
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.png</include>
+                    <include>**/*.ico</include>
+                </includes>
             </resource>
         </resources>
 
         <plugins>
-            <!-- Plugin padrão para compilar o código -->
+            <!-- Compilador Java -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -61,7 +67,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Plugin para gerar o JAR com dependências (futuramente útil) -->
+            <!-- Geração do .jar com dependências e manifesto -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -72,7 +78,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>br.com.jukebox.JukeboxApp</mainClass>
+                            <mainClass>br.com.jukebox.ui.JukeboxUI</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

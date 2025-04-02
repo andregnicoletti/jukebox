@@ -25,6 +25,7 @@ public class JukeboxApp {
 //            frame.setVisible(true);
 //        });
 
+        System.out.println("musicPath: " + musicPath);
         MusicService musicService = new MusicService();
         List<File> musicas = musicService.listarMusicas(musicPath);
 
