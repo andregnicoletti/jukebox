@@ -30,7 +30,7 @@ Uma Jukebox moderna feita em Java + Swing, com suporte a reprodução de música
 ### 1. Clone o repositório:
 
 ```bash
-  git clone https://github.com/seuusuario/jukebox.git
+  git clone https://github.com/andregnicoletti/jukebox.git
   cd jukebox
 ```
 
